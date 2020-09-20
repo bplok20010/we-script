@@ -1,7 +1,7 @@
 {
 	"name": "we-script",
-	"version": "0.1.0",
-	"description": "we-script 微信小程序加载远程JavaScript组件",
+	"version": "1.0.0",
+	"description": "we-script 微信小程序加载远程JavaScript",
 	"main": "miniprogram_dist/index.js",
 	"scripts": {
 		"dev": "gulp dev --develop",

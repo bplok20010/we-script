@@ -1,27 +1,51 @@
-import { evalScript, loadScript } from "./utils";
+import { evalScript, loadScript, hasRunInContext, setRunInContext, globalContext } from "./utils";
 
 const PENDING = 0;
 const COMPLETED = 1;
 
-function attached() {
-	const { context, src, timeout, cache, text } = this.data;
+function attached(this: any) {
+	const { src, timeout, cache, text, once } = this.data;
+	let context = this.data.context;
+
+	let isInit = true;
+
+	this.triggerEvent("onInit", {
+		getContext() {
+			return context;
+		},
+		setContext(ctx: Record<any, any>) {
+			if (!isInit) {
+				return;
+			}
+			context = ctx;
+		},
+	});
+
+	isInit = false;
 
 	if (text) {
-		try {
-			evalScript(text, context);
+		Promise.resolve()
+			.then(() => {
+				evalScript(text, context);
 
-			this.triggerEvent("onExecSuccess");
+				this.triggerEvent("onLoad", {
+					context,
+				});
 
-			this.setData({
-				loadStatus: COMPLETED,
+				this.setData({
+					loadStatus: COMPLETED,
+				});
+			})
+			.catch((e) => {
+				this.triggerEvent("onError", { error: e });
 			});
-		} catch (e) {
-			this.triggerEvent("onExecError", e);
-		}
 		return;
 	}
 
 	if (!src) {
+		this.triggerEvent("onLoad", {
+			context,
+		});
 		return;
 	}
 
@@ -32,8 +56,6 @@ function attached() {
 			{
 				url,
 				timeout,
-				mode: "cors",
-				credentials: "include",
 				method: "GET",
 			},
 			cache
@@ -42,30 +64,23 @@ function attached() {
 
 	Promise.all(promises)
 		.then((codes) => {
-			let execErr: Error | null = null;
-			try {
-				codes.forEach((code) => {
-					evalScript(code, context);
-				});
-			} catch (e) {
-				execErr = e;
-				this.triggerEvent("onExecError", e);
-			}
+			codes.forEach((code) => {
+				if (!(once && hasRunInContext(context, code.url))) {
+					evalScript(code.data, context);
+					setRunInContext(context, code.url);
+				}
+			});
 
-			if (!execErr) {
-				this.triggerEvent("onExecSuccess");
+			this.triggerEvent("onLoad", {
+				context,
+			});
 
-				this.triggerEvent("onLoad");
-
-				this.setData({
-					loadStatus: COMPLETED,
-				});
-			} else {
-				throw execErr;
-			}
+			this.setData({
+				loadStatus: COMPLETED,
+			});
 		})
-		.catch((err) => {
-			this.triggerEvent("onError", err);
+		.catch((e) => {
+			this.triggerEvent("onError", { error: e });
 		});
 }
 
@@ -77,12 +92,19 @@ Component({
 		},
 		text: String,
 		type: String,
-		context: Object,
+		context: {
+			type: Object,
+			value: globalContext,
+		},
 		timeout: {
 			type: Number,
 			value: 10000,
 		},
 		cache: {
+			type: Boolean,
+			value: true,
+		},
+		once: {
 			type: Boolean,
 			value: true,
 		},
