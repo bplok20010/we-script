@@ -1,6 +1,6 @@
 # we-script
 
-支持加载远程 JavaScript 脚本并执行，**支持 ES5 语法**
+让微信小程序支持加载远程 JavaScript 脚本，**支持 ES5 语法**
 
 示例：
 
