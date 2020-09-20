@@ -1,6 +1,6 @@
 {
 	"name": "we-script",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "we-script 微信小程序加载远程JavaScript",
 	"main": "miniprogram_dist/index.js",
 	"scripts": {

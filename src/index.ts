@@ -5,7 +5,7 @@ const COMPLETED = 1;
 
 function attached(this: any) {
 	const { src, timeout, cache, text, once } = this.data;
-	let context = this.data.context;
+	let context: any = globalContext;
 
 	let isInit = true;
 
@@ -91,14 +91,16 @@ Component({
 			optionalTypes: [String, Array],
 		},
 		text: String,
+		// 无效
 		type: String,
+		// 无效
 		context: {
 			type: Object,
 			value: globalContext,
 		},
 		timeout: {
 			type: Number,
-			value: 10000,
+			value: 60000,
 		},
 		cache: {
 			type: Boolean,
